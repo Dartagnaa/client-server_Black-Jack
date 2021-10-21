@@ -51,7 +51,7 @@ int choix_carte(int cards[])
 }
 
 /* jouer une manche */
-int jouer(int sock, joueur_ * joueurs)
+int jouer(joueur_ * joueur, int pointCroupier)
 {
   	int i;
 	int psum=0;
@@ -63,17 +63,7 @@ int jouer(int sock, joueur_ * joueurs)
 	char d;
  	char buffer[256];
 
-    connexion(joueurs);
-  	envoi(sock,buffer,"joueur");
-	int longueur;
-  	if((longueur = read(sock, buffer, sizeof(buffer))) > 0) {
-        nbJoueurs = atoi(buffer);
-        while (nbJoueurs > 0) {
-            connexion(joueurs);
-            nbJoueurs = nbJoueurs - 1;
-        }
-    }
-	printf("\n");
+
 }
 
 
@@ -142,6 +132,7 @@ main(int argc, char **argv) {
     char 		machine[TAILLE_MAX_NOM+1]; 	/* nom de la machine locale */
     char        buffer[256];
     char*       msg;                   /* message à renvoyer au client */
+    int nbJoueurs;                      /* nombre de joueurs */
 
     gethostname(machine,TAILLE_MAX_NOM);		/* recuperation du nom de la machine */
     
@@ -201,10 +192,17 @@ main(int argc, char **argv) {
 			perror("erreur : impossible d'accepter la connexion avec le client.");
 			exit(1);
 		}
-		
+
+		/*GESTION PREMIER JOUEUR
+		envoi(sock,buffer,"joueur");
+        	int longueur;
+          	if((longueur = read(sock, buffer, sizeof(buffer))) > 0) {
+                nbJoueurs = atoi(buffer);
+		*/
+
 		/* traitement du message */
 		printf("reception d'un message.\n");
-		
+
 		envoi(nouv_socket_descriptor,buffer,msg);
 						
 		close(nouv_socket_descriptor);
