@@ -51,7 +51,7 @@ int choix_carte(int cards[])
 }
 
 /* jouer une manche */
-int jouer(int sock)
+int jouer(int sock, joueur_ * joueurs)
 {
   	int i;
 	int psum=0;
@@ -63,10 +63,15 @@ int jouer(int sock)
 	char d;
  	char buffer[256];
 
+    connexion(joueurs);
   	envoi(sock,buffer,"joueur");
 	int longueur;
-  	while((longueur = read(sock, buffer, sizeof(buffer))) > 0) {
-    //sprintf(nbJoueurs,int atoi(buffer));
+  	if((longueur = read(sock, buffer, sizeof(buffer))) > 0) {
+        nbJoueurs = atoi(buffer);
+        while (nbJoueurs > 0) {
+            connexion(joueurs);
+            nbJoueurs = nbJoueurs - 1;
+        }
     }
 	printf("\n");
 }
