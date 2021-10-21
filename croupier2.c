@@ -63,12 +63,11 @@ int jouer(int sock)
 	char d;
  	char buffer[256];
 
-	sprintf(buffer, "joueur");
-  	//renvoi(sock, , ,buffer);
+  	envoi(sock,buffer,"joueur");
 	int longueur;
   	while((longueur = read(sock, buffer, sizeof(buffer))) > 0) {
     //sprintf(nbJoueurs,int atoi(buffer));
-  }
+    }
 	printf("\n");
 }
 
@@ -84,23 +83,6 @@ void reinitialise_buffer(char buffer[]){
     {
         buffer[i] = ' ';
     }
-}
-
-int nbrJoueur(int sock, char buffer[]){
-    int longueur;
-   
-    /* on lit ce qu'on a reçu du client */
-    if ((longueur = read(sock, buffer, sizeof(buffer))) <= 0) 
-    	return;
-
-    char reponse[256];
-
-    for (int i = 0; i < longueur; i++)
-    {
-        reponse[i]=buffer[i];
-    }
-
-    
 }
 
 /* recuperer la reponse du joueur */
@@ -124,12 +106,6 @@ char * reponse_joueur(int sock, char buffer[]) {
 
 /* Envoyer un message au client */
 void envoi(int sock, char buffer[], char* message) {
-
-    int longueur;
-   
-   /* on lit ce qu'on a reçu du client */
-    if ((longueur = read(sock, buffer, sizeof(buffer))) <= 0) 
-    	return;
 
     /* modifie le buffer pour le renvoyer */
     reinitialise_buffer(buffer);    /*buffer vide*/
