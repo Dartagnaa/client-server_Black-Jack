@@ -20,7 +20,7 @@ typedef struct joueur
 {
 	struct sockaddr socket;
 	struct joueur * suiv;
-}JOUEUR;
+}joueur_;
 
 /*----------------------------------------*/
 
@@ -124,12 +124,11 @@ void envoi(int sock, char buffer[], char* message) {
     
 }
 
-
-main(int argc, char **argv) {
-  
+/* création socket + connexion serveur */
+void connexion(joueur_ * j){
     int 		socket_descriptor, 		/* descripteur de socket */
-			nouv_socket_descriptor, 	/* [nouveau] descripteur de socket */
-			longueur_adresse_courante; 	/* longueur d'adresse courante d'un client */
+      nouv_socket_descriptor, 	/* [nouveau] descripteur de socket */
+      longueur_adresse_courante; 	/* longueur d'adresse courante d'un client */
     sockaddr_in 	adresse_locale, 		/* structure d'adresse locale*/
 			adresse_client_courant; 	/* adresse client courant */
     hostent*		ptr_hote; 			/* les infos recuperees sur la machine hote */
@@ -196,6 +195,12 @@ main(int argc, char **argv) {
 			perror("erreur : impossible d'accepter la connexion avec le client.");
 			exit(1);
 		}
+    
+}
+
+main(int argc, char **argv) {
+  
+
 		
 		/* traitement du message */
 		printf("reception d'un message.\n");
