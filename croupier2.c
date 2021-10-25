@@ -18,7 +18,8 @@ typedef struct servent servent;
 /* Tableau dynamique de socket des joueurs */
 typedef struct joueur
 {
-	struct sockaddr socket;
+  int socket;
+  int point;
 	struct joueur * suiv;
 }joueur_;
 
@@ -195,20 +196,36 @@ void connexion(joueur_ * j){
 			perror("erreur : impossible d'accepter la connexion avec le client.");
 			exit(1);
 		}
-    
+
+    j->socket = nouv_socket_descriptor;
+    j->point = 0;
+
 }
 
 main(int argc, char **argv) {
+
+  /* initialiser point du croupier à 0 */
+  int point_croupier = 0;
   
+  /* Conexion du premier joueur + création du tableau dynamique */
+
+  /* demander et recuperer le nombre de joueur à partir du joueur 1 */
+
+  /* -------------- DEBUT DE MANCHE ------------------ */
+
+  /* boucle pour faire autant de malloc que de joueur */
+
+  /* revenir au début du tab et commencer à jouer: */
+    /* appeler la fonction jouer */
+    
 
 		
-		/* traitement du message */
-		printf("reception d'un message.\n");
-		
-		envoi(nouv_socket_descriptor,buffer,msg);
-						
-		close(nouv_socket_descriptor);
-		
-    }
-    
+  /* traitement du message */
+  printf("reception d'un message.\n");
+  
+  envoi(nouv_socket_descriptor,buffer,msg);
+          
+  close(nouv_socket_descriptor);
+  
+      
 }
