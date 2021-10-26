@@ -137,6 +137,7 @@ void connexion(joueur_ * j){
     char 		machine[TAILLE_MAX_NOM+1]; 	/* nom de la machine locale */
     char        buffer[256];
     char*       msg;                   /* message à renvoyer au client */
+    char reponse[256];            /*reponse du char*/
 
     gethostname(machine,TAILLE_MAX_NOM);		/* recuperation du nom de la machine */
     
@@ -156,11 +157,14 @@ void connexion(joueur_ * j){
     /*-----------------------------------------------------------*/
 
     /* Port : utiliser un service existant, par ex. "irc" */
-    if ((ptr_service = getservbyname("irc","tcp")) == NULL) {
+    /*if ((ptr_service = getservbyname("irc","tcp")) == NULL) {
 		perror("erreur : impossible de recuperer le numero de port du service desire.");
 		exit(1);
     }
-    adresse_locale.sin_port = htons(ptr_service->s_port);
+    adresse_locale.sin_port = htons(ptr_service->s_port);*/
+
+    /* utiliser un nouveau numero de port */
+    adresse_locale.sin_port = htons(5000);
 
     /*-----------------------------------------------------------*/
     
@@ -185,29 +189,43 @@ void connexion(joueur_ * j){
     /* attente des connexions et traitement des donnees recues */
     for(;;) {
     
-		longueur_adresse_courante = sizeof(adresse_client_courant);
-		
-		/* adresse_client_courant sera renseigné par accept via les infos du connect */
-		if ((nouv_socket_descriptor = 
-			accept(socket_descriptor, 
-			       (sockaddr*)(&adresse_client_courant),
-			       &longueur_adresse_courante))
-			 < 0) {
-			perror("erreur : impossible d'accepter la connexion avec le client.");
-			exit(1);
+      longueur_adresse_courante = sizeof(adresse_client_courant);
+      
+      /* adresse_client_courant sera renseigné par accept via les infos du connect */
+      if ((nouv_socket_descriptor = 
+        accept(socket_descriptor, 
+              (sockaddr*)(&adresse_client_courant),
+              &longueur_adresse_courante))
+        < 0) {
+        perror("erreur : impossible d'accepter la connexion avec le client.");
+        exit(1);
 		}
 
     j->socket = nouv_socket_descriptor;
+    /*demander le nombre de joueur*/
+    envoi(j->socket,buffer,"joueur");
     j->point = 0;
+    strcmp(reponse,reponse_joueur(j->socket,buffer));
+    envoi(j->socket,buffer,reponse);
 
+
+    return 0;
+  }
 }
-
-main(int argc, char **argv) {
+main(int argc, char **argv){
 
   /* initialiser point du croupier à 0 */
   int point_croupier = 0;
+
+  joueur_ * ListeJ;
+  joueur_ * next;
   
   /* Conexion du premier joueur + création du tableau dynamique */
+  ListeJ = (joueur_ *) malloc(1 * sizeof(joueur_));
+  next = ListeJ;
+
+  connexion(next);
+  
 
   /* demander et recuperer le nombre de joueur à partir du joueur 1 */
 
@@ -221,11 +239,10 @@ main(int argc, char **argv) {
 
 		
   /* traitement du message */
-  printf("reception d'un message.\n");
+  //printf("reception d'un message.\n");
   
-  envoi(nouv_socket_descriptor,buffer,msg);
+  //envoi(nouv_socket_descriptor,buffer,msg);
           
-  close(nouv_socket_descriptor);
   
-      
+  //close(next->socket);
 }
