@@ -109,7 +109,7 @@ void renvoi (int sock,char buffer[]) {
     
     printf("message envoye. \n");
 
-    buffer={0};
+    buffer=0;
 
     return;
 }
@@ -140,17 +140,19 @@ int main(int argc, char **argv) {
     char 	buffer[256];
     char *	prog; 			/* nom du programme */
     char *	host; 			/* nom de la machine distante */
+	char *  port;			/*num port*/
     char *	mesg; 			/* message envoyé */
-    char    nbjoueur=1;		/*nombre de joueur dans la partie*/
+    char    nbjoueur="1";		/*nombre de joueur dans la partie*/
      
     if (argc != 3) {
 	perror("usage : client <adresse-serveur> <numero port>");
 	exit(1);
     }
-   prog = argv[0];
+   	prog = argv[0];
     host = argv[1];
-    /*choix du num de port par le joueur*/
-    adresse_locale.sin_port = htons(argv[2]);
+
+	/*choix du num de port par le joueur*/
+    adresse_locale.sin_port = htons(5000);
     
     printf("nom de l'executable : %s \n", prog);
     printf("adresse du serveur  : %s \n", host);
@@ -182,19 +184,24 @@ int main(int argc, char **argv) {
 	/*--------------------------------------------------------------------------------------------*/
     /*    CONNEXION ETABLIE     */
 
-    printf("Bienvenue dans le jeu du BlackJack !");
+    printf("Bienvenue dans le jeu du BlackJack !\n");
+
 
 	/* gestion des messages reçu du serveur */
     while((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
     	/*renseigner le nombre de joueurs*/
-		if (strcmp(buffer,"joueur")){
+		if (strcmp(buffer,"joueur") == 0){
+			printf("\n");
     		printf("Donnez le nombre de joueur pour cette partie: \n");
-    		nbjoueur=getchar();
-    		sprintf(buffer,nbjoueur);
-    		/*envoie de la reponse au serveur*/
-    		renvoi(socket_descriptor,buffer);
+			strcmp(nbjoueur,getchar());
     	}
+		printf("TEST SORTIE");
     }
+	printf("TEST SORTIE 2");
+	strcmp(buffer,nbjoueur);
+	/*envoie de la reponse au serveur*/
+	renvoi(socket_descriptor,buffer);
+
     /*afficher les règles du Black Jack */
 	affichage_regle();
 
