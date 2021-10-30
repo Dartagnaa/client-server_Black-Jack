@@ -64,7 +64,7 @@ int jouer(int sock)
 	char d;
  	char buffer[256];
 
-  	envoi(sock,buffer,"joueur");
+  	envoi(sock,buffer," joueur");
 	int longueur;
   	while((longueur = read(sock, buffer, sizeof(buffer))) > 0) {
     //sprintf(nbJoueurs,int atoi(buffer));
@@ -112,7 +112,7 @@ void envoi(int sock, char buffer[], char* message) {
     reinitialise_buffer(buffer);    /*buffer vide*/
 
     /* copier le message dans le buffer */
-    sprintf(buffer,message);
+    strncpy(buffer,message,256);
     
     /* mise en attente du programme pour simuler un delai de transmission */
     sleep(3);
@@ -182,7 +182,7 @@ void connexion(joueur_ * j){
 		perror("erreur : impossible de lier la socket a l'adresse de connexion.");
 		exit(1);
     }
-    
+
     /* initialisation de la file d'ecoute */
     listen(socket_descriptor,5);
 

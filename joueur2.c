@@ -87,6 +87,13 @@ void affichage_carte(int num)
 	}
 }
 /*------------------------------------------------------*/
+void intialisationBuffer(char buffer[]){
+	for (int i = 0; i < 256; i++)
+	{
+		buffer[i]=" ";
+	}
+	
+}
 
 /*------------------------------------------------------*/
 void renvoi (int sock,char buffer[]) {
@@ -124,8 +131,6 @@ void affichage_regle(){
 	printf("Le croupier va piocher jusqu'à avoir 17 minimum.");
 	printf("--------------------------------------------------");
 	printf("Au bout de 9 manches, la personne qui a remporté le plus de manche a gagné");
-
-
 }
 
 /*------------------------------------------------------*/
@@ -142,7 +147,7 @@ int main(int argc, char **argv) {
     char *	host; 			/* nom de la machine distante */
 	char *  port;			/*num port*/
     char *	mesg; 			/* message envoyé */
-    char    nbjoueur="1";		/*nombre de joueur dans la partie*/
+    char    nbjoueur[1];		/*nombre de joueur dans la partie*/
      
     if (argc != 3) {
 	perror("usage : client <adresse-serveur> <numero port>");
@@ -188,19 +193,25 @@ int main(int argc, char **argv) {
 
 
 	/* gestion des messages reçu du serveur */
-    while((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
+    if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
     	/*renseigner le nombre de joueurs*/
 		if (strcmp(buffer,"joueur") == 0){
 			printf("\n");
-    		printf("Donnez le nombre de joueur pour cette partie: \n");
-			strcmp(nbjoueur,getchar());
+    		printf("Donnez le nombre de joueur pour cette partie: ");
+			scanf(" %s",nbjoueur);			
+			printf("\nNombre de joueurs renseigne : %c\n",nbjoueur[0]);
+			/*le message va se trouver dans le buffer[0]*/	
+			intialisationBuffer(buffer);
+			strncpy(buffer,nbjoueur,1);
+
+			/*envoie de la reponse au serveur*/
+			renvoi(socket_descriptor,buffer);
     	}
 		printf("TEST SORTIE");
     }
 	printf("TEST SORTIE 2");
-	strcmp(buffer,nbjoueur);
-	/*envoie de la reponse au serveur*/
-	renvoi(socket_descriptor,buffer);
+
+	
 
     /*afficher les règles du Black Jack */
 	affichage_regle();
