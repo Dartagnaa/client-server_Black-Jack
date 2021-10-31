@@ -90,9 +90,10 @@ void affichage_carte(int num)
 void intialisationBuffer(char buffer[]){
 	for (int i = 0; i < 256; i++)
 	{
-		buffer[i]=" ";
+		buffer[i]=0;
 	}
-	
+
+	return;
 }
 
 /*------------------------------------------------------*/
@@ -131,6 +132,8 @@ void affichage_regle(){
 	printf("Le croupier va piocher jusqu'à avoir 17 minimum.");
 	printf("--------------------------------------------------");
 	printf("Au bout de 9 manches, la personne qui a remporté le plus de manche a gagné");
+
+	return;
 }
 
 /*------------------------------------------------------*/
@@ -199,17 +202,21 @@ int main(int argc, char **argv) {
 			printf("\n");
     		printf("Donnez le nombre de joueur pour cette partie: ");
 			scanf(" %s",nbjoueur);			
-			printf("\nNombre de joueurs renseigne : %c\n",nbjoueur[0]);
+			printf("\nNombre de joueurs renseignes : %i \n", nbjoueur[0] );
 			/*le message va se trouver dans le buffer[0]*/	
 			intialisationBuffer(buffer);
-			strncpy(buffer,nbjoueur,1);
-
-			/*envoie de la reponse au serveur*/
-			renvoi(socket_descriptor,buffer);
+			printf("\nbuffer 0 : %i",buffer[0]);
+			printf("\nnbjoueur 0 : %i",nbjoueur[0]);
+			buffer[0]=nbjoueur[0];
+			printf("\nbuffer 0 : %i",buffer[0]);
+			printf("\n");
     	}
-		printf("TEST SORTIE");
+		printf("\nTEST SORTIE");
+		/*envoie de la reponse au serveur*/
+		renvoi(socket_descriptor,buffer);
+		printf("\n");
     }
-	printf("TEST SORTIE 2");
+	printf("\nTEST SORTIE 2");
 
 	
 
@@ -239,6 +246,7 @@ int main(int argc, char **argv) {
     
     printf("connexion avec le serveur fermee, fin du programme.\n");
     
+	printf("\n");
     exit(0);
     
 }
