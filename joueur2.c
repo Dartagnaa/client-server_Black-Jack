@@ -101,7 +101,7 @@ void renvoi (int sock,char buffer[]) {
 
     int longueur;
    
-    if ((longueur = read(sock, buffer, sizeof(buffer))) <= 0) 
+    if ((longueur = read(sock, buffer, sizeof(*buffer))) <= 0) 
     	return;
     
 
@@ -148,9 +148,9 @@ int main(int argc, char **argv) {
     char 	buffer[256];
     char *	prog; 			/* nom du programme */
     char *	host; 			/* nom de la machine distante */
-	char *  port;			/*num port*/
+	int  port;			/*num port*/
     char *	mesg; 			/* message envoyé */
-    char    nbjoueur[1];		/*nombre de joueur dans la partie*/
+    int    nbjoueur;		/*nombre de joueur dans la partie*/
      
     if (argc != 3) {
 	perror("usage : client <adresse-serveur> <numero port>");
@@ -159,9 +159,9 @@ int main(int argc, char **argv) {
    	prog = argv[0];
     host = argv[1];
 	/*choix du num de port par le joueur*/
-    printf(typeof(adresse_locale.sin_port));
-	adresse_locale.sin_port = htons(argv[2]);
-    
+	port = atoi(argv[2]);
+	adresse_locale.sin_port = htons(port);
+
     printf("nom de l'executable : %s \n", prog);
     printf("adresse du serveur  : %s \n", host);
 
@@ -201,17 +201,16 @@ int main(int argc, char **argv) {
 		if (strcmp(buffer,"joueur") == 0){
 			printf("\n");
     		printf("Donnez le nombre de joueur pour cette partie: ");
-			scanf(" %s",nbjoueur);			
-			printf("\nNombre de joueurs renseignes : %i \n", nbjoueur[0] );
+			scanf(" %i",&nbjoueur);			
+			printf("\nNombre de joueurs renseignes : %i \n", nbjoueur);
 			/*le message va se trouver dans le buffer[0]*/	
 			intialisationBuffer(buffer);
+			/*printf("\nbuffer 0 : %i",buffer[0]);*/
+			/*printf("\nnbjoueur 0 : %i",nbjoueur);*/
+			buffer[0]=nbjoueur;
 			printf("\nbuffer 0 : %i",buffer[0]);
-			printf("\nnbjoueur 0 : %i",nbjoueur[0]);
-			buffer[0]=nbjoueur[0];
-			printf("\nbuffer 0 : %i",buffer[0]);
-			printf("\n");
     	}
-		printf("\nTEST SORTIE");
+		printf("\nTEST SORTIE\n");
 		/*envoie de la reponse au serveur*/
 		renvoi(socket_descriptor,buffer);
 		printf("\n");
