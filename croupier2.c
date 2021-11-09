@@ -126,17 +126,14 @@ void envoi(int sock, char buffer[], char* message) {
 }
 
 /* création socket + connexion serveur */
-void connexion(joueur_ * j){
-    int 		socket_descriptor, 		/* descripteur de socket */
-      nouv_socket_descriptor, 	/* [nouveau] descripteur de socket */
+void connexion(joueur_ * j, int socket_descriptor, char buffer[]){
+    int    nouv_socket_descriptor, 	/* [nouveau] descripteur de socket */
       longueur_adresse_courante; 	/* longueur d'adresse courante d'un client */
     sockaddr_in 	adresse_locale, 		/* structure d'adresse locale*/
 			adresse_client_courant; 	/* adresse client courant */
     hostent*		ptr_hote; 			/* les infos recuperees sur la machine hote */
     servent*		ptr_service; 			/* les infos recuperees sur le service de la machine */
     char 		machine[TAILLE_MAX_NOM+1]; 	/* nom de la machine locale */
-    char        buffer[256];
-    char*       msg;                   /* message à renvoyer au client */
     char reponse[256];            /*reponse du char*/
 
     gethostname(machine,TAILLE_MAX_NOM);		/* recuperation du nom de la machine */
@@ -197,7 +194,7 @@ void connexion(joueur_ * j){
               (sockaddr*)(&adresse_client_courant),
               &longueur_adresse_courante))
         < 0) {
-        perror("erreur : impossible d'accepter la connexion avec le client.");
+        perror("erreur : impossible d'accepter la connexion avec le client.\n");
         exit(1);
 		}
 
@@ -205,18 +202,20 @@ void connexion(joueur_ * j){
     /*demander le nombre de joueur*/
     envoi(j->socket,buffer,"joueur");
     j->point = 0;
-    strcmp(reponse,reponse_joueur(j->socket,buffer));
+    strcmp(reponse,reponse_joueur(j->socket_descriptor,buffer));
     envoi(j->socket,buffer,reponse);
-
-
     return 0;
   }
 }
 main(int argc, char **argv){
+  int 		socket_descriptor; 		/* descripteur de socket */
+  char        buffer[256];
+  char*       msg;                   /* message à renvoyer au client */
+  int longueur;
 
   /* initialiser point du croupier à 0 */
   int point_croupier = 0;
-
+  
   joueur_ * ListeJ;
   joueur_ * next;
   
@@ -224,7 +223,15 @@ main(int argc, char **argv){
   ListeJ = (joueur_ *) malloc(1 * sizeof(joueur_));
   next = ListeJ;
 
-  connexion(next);
+  connexion(next, socket_descriptor, buffer);
+  printf("sortie");
+  if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
+    	/*renseigner le nombre de joueurs*/
+		int nbjoueur = buffer[0]; 
+		printf("\nNombre de joueurs renseignes : %i \n", nbjoueur);
+		
+    }
+		printf("\nTEST SORTIE\n");
   
 
   /* demander et recuperer le nombre de joueur à partir du joueur 1 */
