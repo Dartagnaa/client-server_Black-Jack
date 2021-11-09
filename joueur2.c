@@ -158,9 +158,9 @@ int main(int argc, char **argv) {
     }
    	prog = argv[0];
     host = argv[1];
-
 	/*choix du num de port par le joueur*/
-    adresse_locale.sin_port = htons(5000);
+    printf(typeof(adresse_locale.sin_port));
+	adresse_locale.sin_port = htons(argv[2]);
     
     printf("nom de l'executable : %s \n", prog);
     printf("adresse du serveur  : %s \n", host);
