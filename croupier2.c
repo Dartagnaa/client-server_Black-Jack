@@ -21,8 +21,39 @@ typedef struct joueur
   int socket;
   int point;
 	struct joueur * suiv;
-  
+
 }joueur_;
+
+/*------------------------------------------------------*/
+
+/*             FONCTIONS PARTIE RESEAUX                 */
+  
+/*------------------------------------------------------*/
+void reinitialise_buffer(char buffer[]){
+    for (int i = 0; i < 256; i++)
+    {
+        buffer[i] = ' ';
+    }
+}
+
+/* Envoyer un message au client */
+void envoi(int sock, char buffer[], char* message) {
+
+    /* modifie le buffer pour le renvoyer */
+    reinitialise_buffer(buffer);    /*buffer vide*/
+
+    /* copier le message dans le buffer */
+    strncpy(buffer,message,256);
+    
+    /* mise en attente du programme pour simuler un delai de transmission */
+    sleep(3);
+    
+	/*ssize_t write(int fs, const void *buf, size_t N);*/
+    /* envoi du message au client*/
+    write(sock,buffer,strlen(buffer)+1);
+
+    return;
+}
 
 /*----------------------------------------*/
 
@@ -51,6 +82,16 @@ int choix_carte(int cards[])
 	
 	return 0;
 }
+/*------------------------------------------------------*/
+void intialisationBuffer(char buffer[]){
+	for (int i = 0; i < 256; i++)
+	{
+		buffer[i]=0;
+	}
+
+	return;
+}
+
 
 /* jouer une manche */
 int jouer(int sock)
@@ -75,59 +116,33 @@ int jouer(int sock)
 
 
 
-/*------------------------------------------------------*/
-
-/*             FONCTIONS PARTIE RESEAUX                 */
-  
-/*------------------------------------------------------*/
-void reinitialise_buffer(char buffer[]){
-    for (int i = 0; i < 256; i++)
-    {
-        buffer[i] = ' ';
-    }
-}
 
 /* recuperer la reponse du joueur */
 char * reponse_joueur(int sock, char buffer[]) {
-
     int longueur;
-   
+    intialisationBuffer(buffer);
+    printf("\nsock : %i buffer : %c\n",sock, buffer[0]);
    /* on lit ce qu'on a reçu du client */
-    if ((longueur = read(sock, buffer, sizeof(buffer))) <= 0) 
-    	return;
-
+    if ((longueur = read(sock, buffer, sizeof(buffer))) > 0){
+      printf("\nsock : %i buffer : %c\n",sock, buffer[0]);
+    	return 0;
+    }
+    
+    printf("\ntest1\n");
     char reponse[256];
-
+    printf("\ntest2\n");
     for (int i = 0; i < longueur; i++)
     {
         reponse[i]=buffer[i];
     }
+    printf("\nreponse : %d\n",reponse[0]);
 
     return reponse;
 }
 
-/* Envoyer un message au client */
-void envoi(int sock, char buffer[], char* message) {
-
-    /* modifie le buffer pour le renvoyer */
-    reinitialise_buffer(buffer);    /*buffer vide*/
-
-    /* copier le message dans le buffer */
-    strncpy(buffer,message,256);
-    
-    /* mise en attente du programme pour simuler un delai de transmission */
-    sleep(3);
-    
-	/*ssize_t write(int fs, const void *buf, size_t N);*/
-    /* envoi du message au client*/
-    write(sock,buffer,strlen(buffer)+1);
-
-    return;
-    
-}
 
 /* création socket + connexion serveur */
-void connexion(joueur_ * j, int socket_descriptor, char buffer[]){
+void connexion(joueur_ * j, int socket_descriptor, char buffer[], char reponse){
     int    nouv_socket_descriptor, 	/* [nouveau] descripteur de socket */
       longueur_adresse_courante; 	/* longueur d'adresse courante d'un client */
     sockaddr_in 	adresse_locale, 		/* structure d'adresse locale*/
@@ -135,7 +150,7 @@ void connexion(joueur_ * j, int socket_descriptor, char buffer[]){
     hostent*		ptr_hote; 			/* les infos recuperees sur la machine hote */
     servent*		ptr_service; 			/* les infos recuperees sur le service de la machine */
     char 		machine[TAILLE_MAX_NOM+1]; 	/* nom de la machine locale */
-    char reponse[256];            /*reponse du char*/
+
 
     gethostname(machine,TAILLE_MAX_NOM);		/* recuperation du nom de la machine */
     
@@ -202,18 +217,23 @@ void connexion(joueur_ * j, int socket_descriptor, char buffer[]){
     j->socket = nouv_socket_descriptor;
     /*demander le nombre de joueur*/
     envoi(j->socket,buffer,"joueur");
+    printf("\n");
     j->point = 0;
-    strcmp(reponse,reponse_joueur(j->socket_descriptor,buffer));
-    envoi(j->socket,buffer,reponse);
+    printf("\n");
+    char * reponseJ = reponse_joueur(j->socket,buffer);
+    //strcmp(&reponse, reponseJ);
+    printf("/nfin reponse/n");
+    //envoi(j->socket,buffer,reponse);
     return 0;
   }
 }
+
 main(int argc, char **argv){
   int 		socket_descriptor; 		/* descripteur de socket */
   char        buffer[256];
   char*       msg;                   /* message à renvoyer au client */
   int longueur;
-
+  char reponse[256];            /*reponse du char*/
   /* initialiser point du croupier à 0 */
   int point_croupier = 0;
   
@@ -224,7 +244,7 @@ main(int argc, char **argv){
   ListeJ = (joueur_ *) malloc(1 * sizeof(joueur_));
   next = ListeJ;
 
-  connexion(next, socket_descriptor, buffer);
+  connexion(next, socket_descriptor, buffer, *reponse);
   printf("sortie");
   if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
     	/*renseigner le nombre de joueurs*/

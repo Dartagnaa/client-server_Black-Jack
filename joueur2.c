@@ -100,40 +100,26 @@ void intialisationBuffer(char buffer[]){
 /*------------------------------------------------------*/
 void renvoi (int sock,char buffer[]) {
 
-    int longueur;
-   
-    if ((longueur = read(sock, buffer, sizeof(*buffer))) <= 0) 
-    	return;
-    
-
-    buffer[longueur] = '#';
-    buffer[longueur+1] ='\0';
-    
-
     /* mise en attente du prgramme pour simuler un delai de transmission */
     sleep(3);
     
 	/*ssize_t write(int fs, const void *buf, size_t N);*/
     write(sock,buffer,strlen(buffer)+1);
     
-    printf("message envoye. \n");
-
-    buffer=0;
-
-    return;
+    printf("\nmessage envoye.\n");
+	return;
 }
 
 /*------------------------------------------------------*/
 void affichage_regle(){
-	printf("Le but est de faire 21 points.");
-	printf("L'As vaut 1 ou 11, et les têtes valent 10");
-	printf("Si vous faites 21 points sue les 2 première cartes : Black Jack. Vous gagnez la manche");
-	printf("Sinon, vous pouvez piocher une carte. Mais attention, il ne faut pas dépasser 21");
-	printf("Si vous dépassez 21, vous perdez la manche, si vous faites moins, c'est au tour du croupier de tirer une carte");
-	printf("Le croupier va piocher jusqu'à avoir 17 minimum.");
-	printf("--------------------------------------------------");
-	printf("Au bout de 9 manches, la personne qui a remporté le plus de manche a gagné");
-
+	printf("\nLe but est de faire 21 points.\n");
+	printf("L'As vaut 1 ou 11, et les têtes valent 10\n");
+	printf("Si vous faites 21 points sue les 2 première cartes : Black Jack. Vous gagnez la manche\n");
+	printf("Sinon, vous pouvez piocher une carte. Mais attention, il ne faut pas dépasser 21\n");
+	printf("Si vous dépassez 21, vous perdez la manche, si vous faites moins, c'est au tour du croupier de tirer une carte\n");
+	printf("Le croupier va piocher jusqu'à avoir 17 minimum.\n");
+	printf("--------------------------------------------------\n");
+	printf("Au bout de 9 manches, la personne qui a remporté le plus de manche a gagné\n");
 	return;
 }
 
@@ -151,7 +137,7 @@ int main(int argc, char **argv) {
     char *	host; 			/* nom de la machine distante */
 	int  port;			/*num port*/
     char *	mesg; 			/* message envoyé */
-    int    nbjoueur;		/*nombre de joueur dans la partie*/
+    char *    nbjoueur;		/*nombre de joueur dans la partie*/
      
     if (argc != 3) {
 	perror("usage : client <adresse-serveur> <numero port>");
@@ -200,48 +186,23 @@ int main(int argc, char **argv) {
     if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
     	/*renseigner le nombre de joueurs*/
 		if (strcmp(buffer,"joueur") == 0){
-			printf("\n");
-    		printf("Donnez le nombre de joueur pour cette partie: ");
-			scanf(" %i",&nbjoueur);			
-			printf("\nNombre de joueurs renseignes : %i \n", nbjoueur);
+    		printf("\nDonnez le nombre de joueur pour cette partie: \n");
+			//scanf(" %c",nbjoueur);			
+			//printf("\nNombre de joueurs renseignes : %s \n", nbjoueur);
 			/*le message va se trouver dans le buffer[0]*/	
 			intialisationBuffer(buffer);
 			/*printf("\nbuffer 0 : %i",buffer[0]);*/
 			/*printf("\nnbjoueur 0 : %i",nbjoueur);*/
-			buffer[0]=nbjoueur;
-			printf("\nbuffer 0 : %i",buffer[0]);
+			strncpy(buffer,"2",1);
+			//printf("\nbuffer 0 : %i",buffer[0]);
     	}
-		printf("\nTEST SORTIE\n");
 		/*envoie de la reponse au serveur*/
 		renvoi(socket_descriptor,buffer);
-		printf("\n");
     }
-	printf("\nTEST SORTIE 2");
-
-	
 
     /*afficher les règles du Black Jack */
 	affichage_regle();
-
-    /* envoi du message vers le serveur */
-    if ((write(socket_descriptor, mesg, strlen(mesg))) < 0) {
-	perror("erreur : impossible d'ecrire le message destine au serveur.");
-	exit(1);
-    }
-    
-    /* mise en attente du prgramme pour simuler un delai de transmission */
-    sleep(3);
-     
-    printf("message envoye au serveur. \n");
-                
-    /* lecture de la reponse en provenance du serveur */
-    while((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
-	printf("reponse du serveur : \n");
-	write(1,buffer,longueur);
-    }
-    
-    printf("\nfin de la reception.\n");
-    
+	
     close(socket_descriptor);
     
     printf("connexion avec le serveur fermee, fin du programme.\n");
