@@ -21,6 +21,7 @@ typedef struct joueur
   int socket;
   int point;
 	struct joueur * suiv;
+  
 }joueur_;
 
 /*----------------------------------------*/
