@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
     char *	host; 			/* nom de la machine distante */
 	int  port;			/*num port*/
     char *	mesg; 			/* message envoyé */
-    char *    nbjoueur;		/*nombre de joueur dans la partie*/
+    char    rep;		/*reponse du joueur*/
      
     if (argc != 3) {
 	perror("usage : client <adresse-serveur> <numero port>");
@@ -176,25 +176,20 @@ int main(int argc, char **argv) {
 	exit(1);
     }
     
-	/*--------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------*/
     /*    CONNEXION ETABLIE     */
 
     printf("Bienvenue dans le jeu du BlackJack !\n");
-
 
 	/* gestion des messages reçu du serveur */
     if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
     	/*renseigner le nombre de joueurs*/
 		if (strcmp(buffer,"joueur") == 0){
     		printf("\nDonnez le nombre de joueur pour cette partie: \n");
-			//scanf(" %c",nbjoueur);			
-			//printf("\nNombre de joueurs renseignes : %s \n", nbjoueur);
+			scanf(" %c",&rep);
 			/*le message va se trouver dans le buffer[0]*/	
 			intialisationBuffer(buffer);
-			/*printf("\nbuffer 0 : %i",buffer[0]);*/
-			/*printf("\nnbjoueur 0 : %i",nbjoueur);*/
-			strncpy(buffer,"2",1);
-			//printf("\nbuffer 0 : %i",buffer[0]);
+			strncpy(buffer,&rep,1);
     	}
 		/*envoie de la reponse au serveur*/
 		renvoi(socket_descriptor,buffer);
@@ -202,12 +197,15 @@ int main(int argc, char **argv) {
 
     /*afficher les règles du Black Jack */
 	affichage_regle();
+/*--------------------------------------------------------------------------------------------*/
 	
+
+
+
+	/*Fermeture de la connexion*/
     close(socket_descriptor);
     
     printf("connexion avec le serveur fermee, fin du programme.\n");
     
-	printf("\n");
     exit(0);
-    
 }
