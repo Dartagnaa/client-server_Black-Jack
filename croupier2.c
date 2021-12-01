@@ -30,12 +30,22 @@ typedef struct joueur
   
 /*------------------------------------------------------*/
 
+/*-----------------------------------------*/
+void intialisationBuffer(char buffer[]){
+	for (int i = 0; i < 256; i++)
+	{
+		buffer[i]=0;
+	}
+
+	return;
+}
+
 
 /* Envoyer un message au client */
 void envoi(int sock, char buffer[], char* message) {
 
     /* modifie le buffer pour le renvoyer */
-    reinitialise_buffer(buffer);    /*buffer vide*/
+    intialisationBuffer(buffer);    /*buffer vide*/
 
     /* copier le message dans le buffer */
     strncpy(buffer,message,256);
@@ -152,15 +162,6 @@ int choix_carte(int cards[])
 	return 0;
 }
 /*-----------------------------------------*/
-void intialisationBuffer(char buffer[]){
-	for (int i = 0; i < 256; i++)
-	{
-		buffer[i]=0;
-	}
-
-	return;
-}
-
 
 /* jouer une manche */
 int jouer(int sock)
@@ -173,7 +174,9 @@ int jouer(int sock)
 	int cards[52];
 	int nbJoueurs;
 	char d;
+  char go_on;
  	char buffer[256];
+
 
   
 }
@@ -224,7 +227,8 @@ main(int argc, char **argv){
   connexion(j1, socket_descriptor, buffer, &reponse,port1);
 
   /*demander le nombre de joueur*/
-  envoi(j1->socket,buffer,"joueur");
+  envoi(j1->socket,buffer,"pret");
+  
   reponse = reponse_joueur(j1->socket,buffer);
   
   printf("Sortie de connexion, recup reponse :%c\n",reponse);
@@ -245,5 +249,5 @@ main(int argc, char **argv){
           
   
 	/*Fermeture de la connexion*/
-  close(j1->socket);
+  //close(j1->socket);
 }
