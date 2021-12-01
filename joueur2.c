@@ -16,6 +16,12 @@ typedef struct hostent 		hostent;
 typedef struct servent 		servent;
 
 /*-------------------------------------------------------*/
+int convert_vdr(int a)
+{
+	if ((a%100==11) ||(a%100==12) ||(a%100==13)) return (a/100)*100+10;
+	else return a;
+}
+
 
 void affichage_carte(int num)
 {
@@ -181,31 +187,74 @@ int main(int argc, char **argv) {
 
     printf("Bienvenue dans le jeu du BlackJack !\n");
 
-	/* gestion des messages reçu du serveur */
-    if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
-    	/*renseigner le nombre de joueurs*/
-		if (strcmp(buffer,"joueur") == 0){
-    		printf("\nDonnez le nombre de joueur pour cette partie: \n");
-			scanf(" %c",&rep);
-			/*le message va se trouver dans le buffer[0]*/	
-			intialisationBuffer(buffer);
-			strncpy(buffer,&rep,1);
-    	}
-		/*envoie de la reponse au serveur*/
-		renvoi(socket_descriptor,buffer);
-    }
-
     /*afficher les règles du Black Jack */
 	affichage_regle();
 /*--------------------------------------------------------------------------------------------*/
 	
+	/* ecoute en continue du serveur */
+	int manche = 1;
+	char ecoute = 'o';
+	char revanche = 'o';
+	int repInt;
+	int test = 1;
+	while(manche <= 9 && ecoute == 'o' && revanche == 'o'){
+		/* gestion des messages reçu du serveur */
+		if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
+			/*renseigner le nombre de joueurs*/
+			if (strcmp(buffer,"pret") == 0){
+				do{
+					printf("Etes-vous prêt à jouer ? (1 pour oui, 0 pour non)\n");
+					scanf("%d",&repInt);
+					switch (repInt){
+						case 0 : 
+							strncpy(&rep,"n",1);
+							test = 1;
+							break;
+						case 1 : 
+							strncpy(&rep,"o",1);
+							test = 1;
+							break;
+						default : test = 0;
+					}
+				}while (test == 0);
+				
+				/*le message va se trouver dans le buffer[0]*/	
+				intialisationBuffer(buffer);
+				strncpy(buffer,&rep,1);
+			//si le croupier envoi des cartes
+			if (strcmp(buffer,"carte")==0){
+				//écouter à nouveau
+
+					//décomposer le message reçu :
 
 
+					//afficher
+					printf("Carte du croupier\n");
+					affichage_carte(buffer[0]);
+					printf("\n");
+					printf("Cartes du joueur:\n");
+					affichage_carte(buffer[1]);
+					//printf("\n");
+					affichage_carte(buffer[2]);
+					//printf("\n");
+			}
+    		}
+			/*envoie de la reponse au serveur*/
+			renvoi(socket_descriptor,buffer);
+			
+			manche = 10;
+		}
+		
+	}
+
+	
 
 	/*Fermeture de la connexion*/
-    close(socket_descriptor);
+    //close(socket_descriptor);
     
-    printf("connexion avec le serveur fermee, fin du programme.\n");
+    //printf("connexion avec le serveur fermee, fin du programme.\n");
+
+	
     
     exit(0);
 }
