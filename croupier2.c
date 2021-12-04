@@ -147,7 +147,7 @@ int choix_carte(int cards[])
 	int desk[52];	
 	for (i=0;i<52;i++){
 		desk[i] = (i/13+3)*100 + i%13 + 1;
-    }
+  }
 	srand(time(NULL));
 	for (i = 0; i < 52; i++)
 	{
@@ -164,23 +164,66 @@ int choix_carte(int cards[])
 /*-----------------------------------------*/
 
 /* jouer une manche */
-int jouer(int sock)
+int jouer(joueur_ joueurs, int * pt_croupier)
 {
-  	int i;
-	int psum=0;
+  int i=0;
 	int bsum=0;
-	int pcards[5]={0};
+	int p1cards[5]={0};
+	int p2cards[5]={0};
 	int bcards[5]={0};
 	int cards[52];
-	int nbJoueurs;
-	char d;
   char go_on;
  	char buffer[256];
+  joueur_ j1 = joueurs;
+  joueur_ j2 = joueurs->suivant;
 
+//shuff the cards
+	choix_carte(cards);
 
+	//give the cards
+	p1cards[0]=cards[0];
+	p1cards[1]=cards[1];
+  p2cards[0]=cards[2];
+  p2cards[0]=cards[3];
+	bcards[0]=cards[4];
+	bcards[1]=cards[5];
+	
+	for (i=0; i<2; i++)
+	{
+		if (p1cards[i]%100 == 1)
+		{
+      envoi(j1->sock, buffer, "valeur A");
+			if (strcmp(buffer,"y")==0)
+			{
+				j1->point = j1->point + 11;
+			}
+			else if(strcmp(buffer,"n")==0)
+			{
+				j1->point = j1->point + 1;
+			}
+		}
+  }
+}
+/*		else if (convert_jkq(pcards[i]) %100 ==10) psum = psum + 10;
+		else psum = psum + pcards[i]%100;
+		
+		if (psum > 21)
+		{
+			printf("Sum of player's cards now:%d\n\n",psum);
+			printf("Computer win!\n");
+			return 1;
+		}
+		else if (psum == 21)
+		{
+			printf("Sum of player's cards now:%d\n\n",psum);
+			printf("Player win!\n");
+			return 0;
+		}
+	}
+	printf("Sum of player's cards now:%d\n\n",psum);
   
 }
-
+*/
 
 /* recuperer la reponse du joueur -- fonctionne */
 char reponse_joueur(int sock, char buffer[]) {
@@ -207,6 +250,7 @@ main(int argc, char **argv){
   char*       msg;                   /* message à renvoyer au client */
   int longueur;
   char reponse;            /*reponse du char*/
+  int manche = 1;
   /* initialiser point du croupier à 0 */
   int point_croupier = 0;
   
@@ -222,14 +266,15 @@ main(int argc, char **argv){
   j2 = ListeJ->suiv;
   int port1 = 5000;
   int port2 = 6000;
+  
 
   //Etablissement de la connexion avec le joueur 1
   connexion(j1, socket_descriptor, buffer, &reponse,port1);
 
-  /*demander le nombre de joueur*/
-  envoi(j1->socket,buffer,"pret");
-  
-  reponse = reponse_joueur(j1->socket,buffer);
+  while(manche <= 9){
+    jouer(ListeJ, &point_croupier);
+    manche = manche - 1;
+  }
   
   printf("Sortie de connexion, recup reponse :%c\n",reponse);
 
