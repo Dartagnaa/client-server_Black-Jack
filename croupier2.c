@@ -1,9 +1,8 @@
 /*----------------------------------------------
-Serveur à lancer avant le client
+Serveur de notre application
 ------------------------------------------------*/
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <linux/types.h> 	/* pour les sockets */
 #include <sys/socket.h>
 #include <netdb.h> 		/* pour hostent, servent */
@@ -41,7 +40,7 @@ void intialisationBuffer(char buffer[]){
 }
 
 
-/* Envoyer un message au client */
+/* ------- Envoyer un message au client -------- */
 void envoi(int sock, char buffer[], char* message) {
 
     /* modifie le buffer pour le renvoyer */
@@ -61,7 +60,7 @@ void envoi(int sock, char buffer[], char* message) {
 }
 
 
-/* création socket + connexion au client */
+/* ------  création socket + connexion au client ---------- */
 void connexion(joueur_ * j, int socket_descriptor, char buffer[], char * reponse, int numPort){
     int    nouv_socket_descriptor, 	/* [nouveau] descripteur de socket */
       longueur_adresse_courante; 	/* longueur d'adresse courante d'un client */
@@ -71,7 +70,7 @@ void connexion(joueur_ * j, int socket_descriptor, char buffer[], char * reponse
     servent*		ptr_service; 			/* les infos recuperees sur le service de la machine */
     char 		machine[TAILLE_MAX_NOM+1]; 	/* nom de la machine locale */
 
-    gethostname(machine,TAILLE_MAX_NOM);		/* recuperation du nom de la machine */
+    gethostname(machine,TAILLE_MAX_NOM);	/* recuperation du nom de la machine */
     
     /* recuperation de la structure d'adresse en utilisant le nom */
     if ((ptr_hote = gethostbyname(machine)) == NULL) {
@@ -135,18 +134,17 @@ void connexion(joueur_ * j, int socket_descriptor, char buffer[], char * reponse
 
 
 /*----------------------------------------*/
-
 /*      FONCTIONS POUR LE BLACK JACK     */
-
 /*---------------------------------------*/
+
 /* Choisir une carte */
-int choix_carte(int cards[])
+void choix_carte(int cards[])
 {
 	int t;
 	int i;
 	int desk[52];	
 	for (i=0;i<52;i++){
-		desk[i] = (i/13+3)*100 + i%13 + 1;
+		desk[i] = i+1;
   }
 	srand(time(NULL));
 	for (i = 0; i < 52; i++)
@@ -158,26 +156,29 @@ int choix_carte(int cards[])
 		cards[i] = desk[t];
 		desk[t] = 0;
 	}
-	
-	return 0;
+
 }
 /*-----------------------------------------*/
 
 /* jouer une manche */
-int jouer(joueur_ joueurs, int * pt_croupier)
+int jouer(joueur_ *joueurs, int * pt_croupier)
 {
-  int i=0;
-	int bsum=0;
-	int p1cards[5]={0};
-	int p2cards[5]={0};
-	int bcards[5]={0};
-	int cards[52];
-  char go_on;
- 	char buffer[256];
-  joueur_ j1 = joueurs;
-  joueur_ j2 = joueurs->suivant;
+    int i=0;
+    int bsum=0;
+    int p1cards[5]={0};
+    int p2cards[5]={0};
+    int bcards[5]={0};
+    int cards[52];
+    char go_on;
+    char buffer[256];
+    int longueur;
+
+  intialisationBuffer(buffer);
+  joueur_ * j1 = joueurs;
+  joueur_ * j2 = joueurs->suiv;
 
 //shuff the cards
+  
 	choix_carte(cards);
 
 	//give the cards
@@ -187,22 +188,50 @@ int jouer(joueur_ joueurs, int * pt_croupier)
   p2cards[0]=cards[3];
 	bcards[0]=cards[4];
 	bcards[1]=cards[5];
-	
+
+  char Cp1cards0[2];
+  char Cp1cards1[2];
+  char Cbcards0[2];
+  sprintf(Cp1cards0, "%d", p1cards[0]);
+  sprintf(Cp1cards1, "%d", p1cards[1]);
+  sprintf(Cbcards0, "%d", bcards[0]);
+
+  char envoiCarteJ1[255];
+  strcpy(&envoiCarteJ1[0],"C");
+  for (int i = 1; i < 3; i++)
+  {
+    strcpy(&envoiCarteJ1[i],&Cp1cards0[i-1]);
+  }
+  for (int i = 3; i < 5; i++)
+  {
+    strcpy(&envoiCarteJ1[i],&Cp1cards1[i-3]);
+  }
+  for (int i = 5; i < 7; i++)
+  {
+    strcpy(&envoiCarteJ1[i],&Cbcards0[i-5]);
+  }
+  printf("%s\n", envoiCarteJ1);
+
+  envoi(j1->socket,buffer,envoiCarteJ1);
+
 	for (i=0; i<2; i++)
 	{
 		if (p1cards[i]%100 == 1)
 		{
-      envoi(j1->sock, buffer, "valeur A");
-			if (strcmp(buffer,"y")==0)
-			{
-				j1->point = j1->point + 11;
-			}
-			else if(strcmp(buffer,"n")==0)
-			{
-				j1->point = j1->point + 1;
-			}
+      envoi(j1->socket, buffer, "valeur A");
+      if((longueur = read(j1->socket, buffer, sizeof(buffer))) > 0) {
+        if (strcmp(buffer,"y")==0)
+        {
+          j1->point = j1->point + 11;
+        } 
+        else if(strcmp(buffer,"n")==0)
+        {
+          j1->point = j1->point + 1;
+        }
+      }
 		}
   }
+  printf("%i",j1->point);
 }
 /*		else if (convert_jkq(pcards[i]) %100 ==10) psum = psum + 10;
 		else psum = psum + pcards[i]%100;
@@ -239,12 +268,11 @@ char reponse_joueur(int sock, char buffer[]) {
 }
 
 /*----------------------------------------*/
-
 /*                 MAIN                  */
-
 /*---------------------------------------*/
 
-main(int argc, char **argv){
+int main(int argc, char **argv){
+  
   int 		socket_descriptor; 		/* descripteur de socket */
   char        buffer[256];
   char*       msg;                   /* message à renvoyer au client */
@@ -257,7 +285,7 @@ main(int argc, char **argv){
   joueur_ * ListeJ;
   joueur_ * j1;
   joueur_ * j2;
-
+  
   
   /* Conexion des 2 joueurs */
   ListeJ = (joueur_ *) malloc(1 * sizeof(joueur_));
@@ -266,15 +294,11 @@ main(int argc, char **argv){
   j2 = ListeJ->suiv;
   int port1 = 5000;
   int port2 = 6000;
-  
 
   //Etablissement de la connexion avec le joueur 1
   connexion(j1, socket_descriptor, buffer, &reponse,port1);
-
-  while(manche <= 9){
-    jouer(ListeJ, &point_croupier);
-    manche = manche - 1;
-  }
+  
+  jouer(ListeJ, &point_croupier);
   
   printf("Sortie de connexion, recup reponse :%c\n",reponse);
 
