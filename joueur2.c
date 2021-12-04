@@ -16,83 +16,18 @@ typedef struct hostent 		hostent;
 typedef struct servent 		servent;
 
 /*-------------------------------------------------------*/
-int convert_vdr(int a)
+void convert_vdr(char a)
 {
-	if ((a%100==11) ||(a%100==12) ||(a%100==13)) return (a/100)*100+10;
-	else return a;
-}
-
-
-void affichage_carte(int num)
-{
-	char fl;
-	int po_num;
-	
-	fl = num / 100;
-	po_num = num % 100;
-	switch (po_num)
-	{
-		case 1: 
-		{
-			printf("*******\n");
-			printf("*     *\n");
-			printf("* %c   *\n", fl);
-			printf("*   A *\n");
-			printf("*     *\n");
-			printf("*******\n");
-			break;
-		}
-		case 2:
-		case 3:
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-		case 8:
-		case 9:
-		case 10:
-		{
-			printf("*******\n");
-			printf("*     *\n");
-			printf("* %c   *\n", fl);
-			printf("*  %2d *\n", po_num);
-			printf("*     *\n");
-			printf("*******\n");
-			break;
-		}
-		case 11:
-		{
-			printf("*******\n");
-			printf("*     *\n");
-			printf("* %c   *\n", fl);
-			printf("*   v *\n");
-			printf("*     *\n");
-			printf("*******\n");
-			break;
-		}
-		case 12:
-		{
-			printf("*******\n");
-			printf("*     *\n");
-			printf("* %c   *\n", fl);
-			printf("*   D *\n");
-			printf("*     *\n");
-			printf("*******\n");
-			break;
-		}
-		case 13:
-		{
-			printf("*******\n");
-			printf("*     *\n");
-			printf("* %c   *\n", fl);
-			printf("*   R *\n");
-			printf("*     *\n");
-			printf("*******\n");
-			break;
-		}
-
+	if strcmp(a,"11"){
+		strcpy(a,"V");
+	}
+	else if strcmp(a,"12"){
+		strcpy(a,"D");
+	}else if strcmp(a,"13"){
+		strcpy(a,"R");
 	}
 }
+
 /*------------------------------------------------------*/
 void intialisationBuffer(char buffer[]){
 	for (int i = 0; i < 256; i++)
@@ -104,9 +39,15 @@ void intialisationBuffer(char buffer[]){
 }
 
 /*------------------------------------------------------*/
-void renvoi (int sock,char buffer[]) {
+void envoi (int sock,char buffer[], char * message) {
 
-    /* mise en attente du prgramme pour simuler un delai de transmission */
+    /* modifie le buffer pour le renvoyer */
+    intialisationBuffer(buffer);    /*buffer vide*/
+
+    /* copier le message dans le buffer */
+    strncpy(buffer,message,256);
+
+	/* mise en attente du prgramme pour simuler un delai de transmission */
     sleep(3);
     
 	/*ssize_t write(int fs, const void *buf, size_t N);*/
@@ -125,7 +66,7 @@ void affichage_regle(){
 	printf("Si vous dépassez 21, vous perdez la manche, si vous faites moins, c'est au tour du croupier de tirer une carte\n");
 	printf("Le croupier va piocher jusqu'à avoir 17 minimum.\n");
 	printf("--------------------------------------------------\n");
-	printf("Au bout de 9 manches, la personne qui a remporté le plus de manche a gagné\n");
+	printf("La personne qui a remporté la partie a gagné\n");
 	return;
 }
 
@@ -189,60 +130,33 @@ int main(int argc, char **argv) {
 
     /*afficher les règles du Black Jack */
 	affichage_regle();
+
 /*--------------------------------------------------------------------------------------------*/
 	
 	/* ecoute en continue du serveur */
-	int manche = 1;
-	char ecoute = 'o';
-	char revanche = 'o';
+	int ecoute = 1;
 	int repInt;
-	int test = 1;
-	while(manche <= 9 && ecoute == 'o' && revanche == 'o'){
+	char d;
+	while(ecoute == 1){
 		/* gestion des messages reçu du serveur */
 		if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
-			/*renseigner le nombre de joueurs*/
-			if (strcmp(buffer,"pret") == 0){
-				do{
-					printf("Etes-vous prêt à jouer ? (1 pour oui, 0 pour non)\n");
-					scanf("%d",&repInt);
-					switch (repInt){
-						case 0 : 
-							strncpy(&rep,"n",1);
-							test = 1;
-							break;
-						case 1 : 
-							strncpy(&rep,"o",1);
-							test = 1;
-							break;
-						default : test = 0;
-					}
-				}while (test == 0);
-				
-				/*le message va se trouver dans le buffer[0]*/	
-				intialisationBuffer(buffer);
-				strncpy(buffer,&rep,1);
+
 			//si le croupier envoi des cartes
-			if (strcmp(buffer,"carte")==0){
-				//écouter à nouveau
-
-					//décomposer le message reçu :
-
-
-					//afficher
-					printf("Carte du croupier\n");
-					affichage_carte(buffer[0]);
-					printf("\n");
-					printf("Cartes du joueur:\n");
-					affichage_carte(buffer[1]);
-					//printf("\n");
-					affichage_carte(buffer[2]);
-					//printf("\n");
+			if (strcmp(buffer[0],"C")==0){
+				
+				printf("Vos cartes : \n %c\n %c\n",convert_vdr(buffer[1]), convert_vdr(buffer[2]));
+				printf("Carte du croupier : %c", convert_vdr(buffer[3]));
 			}
-    		}
-			/*envoie de la reponse au serveur*/
-			renvoi(socket_descriptor,buffer);
-			
-			manche = 10;
+			//choix de la valeur de l'As
+			if (strcmp(buffer,"valeur A")==0){
+				printf("Choisissez la valeur de l'As: 'o' pour 11 ou 'n' pour 1 :\n");
+				do{
+					d = getchar();
+				} while (d!='o' && d!='n');
+				envoi(socket_descriptor, buffer, d);
+			}
+
+
 		}
 		
 	}
