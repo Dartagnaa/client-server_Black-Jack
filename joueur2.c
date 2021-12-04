@@ -16,14 +16,13 @@ typedef struct hostent 		hostent;
 typedef struct servent 		servent;
 
 /*-------------------------------------------------------*/
-void convert_vdr(char a)
+void convert_vdr(char * a)
 {
-	if strcmp(a,"11"){
+	if (strcmp(a,"11") || (strcmp(a,"24") || (strcmp(a,"37") || (strcmp(a,"50")){
 		strcpy(a,"V");
-	}
-	else if strcmp(a,"12"){
+	}else if (strcmp(a,"12") || (strcmp(a,"25") || (strcmp(a,"38") || (strcmp(a,"51")){
 		strcpy(a,"D");
-	}else if strcmp(a,"13"){
+	}else if (strcmp(a,"13") || (strcmp(a,"26") || (strcmp(a,"37") || (strcmp(a,"52")){
 		strcpy(a,"R");
 	}
 }
@@ -142,10 +141,15 @@ int main(int argc, char **argv) {
 		if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
 
 			//si le croupier envoi des cartes
-			if (strcmp(buffer[0],"C")==0){
-				
-				printf("Vos cartes : \n %c\n %c\n",convert_vdr(buffer[1]), convert_vdr(buffer[2]));
-				printf("Carte du croupier : %c", convert_vdr(buffer[3]));
+			char lettre = buffer[0];
+			printf("%c", lettre);
+			if (strcmp(&lettre,"C")==0){
+				convert_vdr(&buffer[1]);
+				convert_vdr(&buffer[2]);
+				convert_vdr(&buffer[3]);
+
+				printf("Vos cartes : \n %c\n %c\n",buffer[1], buffer[2]);
+				printf("Carte du croupier : %c", buffer[3]);
 			}
 			//choix de la valeur de l'As
 			if (strcmp(buffer,"valeur A")==0){
@@ -153,22 +157,22 @@ int main(int argc, char **argv) {
 				do{
 					d = getchar();
 				} while (d!='o' && d!='n');
-				envoi(socket_descriptor, buffer, d);
+				envoi(socket_descriptor, buffer, &d);
 			}
 
-
+			
 		}
-		
+		ecoute = 0;
 	}
 
 	
 
 	/*Fermeture de la connexion*/
-    //close(socket_descriptor);
+    
     
     //printf("connexion avec le serveur fermee, fin du programme.\n");
 
 	
-    
-    exit(0);
+    close(socket_descriptor);
+    //exit(0);
 }
