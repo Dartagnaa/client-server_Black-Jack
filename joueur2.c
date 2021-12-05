@@ -18,11 +18,11 @@ typedef struct servent 		servent;
 /*-------------------------------------------------------*/
 void convert_vdr(char * a)
 {
-	if (strcmp(a,"11") || (strcmp(a,"24") || (strcmp(a,"37") || (strcmp(a,"50")){
+	if (strcmp(a,"11") || (strcmp(a,"24")) || (strcmp(a,"37")) || (strcmp(a,"50"))){
 		strcpy(a,"V");
-	}else if (strcmp(a,"12") || (strcmp(a,"25") || (strcmp(a,"38") || (strcmp(a,"51")){
+	}else if (strcmp(a,"12") || (strcmp(a,"25")) || (strcmp(a,"38")) || (strcmp(a,"51"))){
 		strcpy(a,"D");
-	}else if (strcmp(a,"13") || (strcmp(a,"26") || (strcmp(a,"37") || (strcmp(a,"52")){
+	}else if (strcmp(a,"13") || (strcmp(a,"26")) || (strcmp(a,"37")) || (strcmp(a,"52"))){
 		strcpy(a,"R");
 	}
 }
@@ -141,9 +141,12 @@ int main(int argc, char **argv) {
 		if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
 
 			//si le croupier envoi des cartes
-			char lettre = buffer[0];
-			printf("%c", lettre);
+			char lettre;
+			strcpy(&lettre, &buffer[0]);
+			printf("%c\n", lettre);
+			printf("%i\n",strcmp(&lettre,"C"));
 			if (strcmp(&lettre,"C")==0){
+				printf("Les cartes ont été tirées :\n");
 				convert_vdr(&buffer[1]);
 				convert_vdr(&buffer[2]);
 				convert_vdr(&buffer[3]);
