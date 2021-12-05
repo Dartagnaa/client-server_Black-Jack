@@ -137,6 +137,12 @@ void connexion(joueur_ * j, int socket_descriptor, char buffer[], char * reponse
 /*      FONCTIONS POUR LE BLACK JACK     */
 /*---------------------------------------*/
 
+/* calcul points */
+void point (int cartes[]){
+
+}
+
+
 /* Choisir une carte */
 void choix_carte(int cards[])
 {
@@ -158,6 +164,64 @@ void choix_carte(int cards[])
 	}
 
 }
+/* copier les cartes dans le buffer pouis envoyer au joueur*/
+void envoiCarteJoueur(int cartes[],joueur_ *joueurs)
+{
+  int p1cards[5]={0};
+  int p2cards[5]={0};
+  int bcards[5]={0};
+  //give the cards J1
+	p1cards[0]=cards[0];
+	p1cards[1]=cards[2];
+  //J2
+  p2cards[0]=cards[1];
+  p2cards[0]=cards[3];
+  //Croupier
+	bcards[0]=cards[4];
+
+  char Cp1cards0[2];
+  char Cp1cards1[2];
+  char Cbcards0[2];
+  sprintf(Cp1cards0, "%d", p1cards[0]);
+  sprintf(Cp1cards1, "%d", p1cards[1]);
+  sprintf(Cbcards0, "%d", bcards[0]);
+
+  char envoiCarteJ1[255];
+  strcpy(&envoiCarteJ1[0],"C");
+  for (int i = 1; i < 3; i++)
+  {
+    if (Cp1cards0[i-1] > 0 and Cp1cards0[i-1] < 10){
+      strcpy(&envoiCarteJ1[i],&Cp1cards0[i-1]);
+      strcpy(&envoiCarteJ1[i+1],'/');
+      i=3;
+    }else{
+      strcpy(&envoiCarteJ1[i],&Cp1cards0[i-1]);
+    }
+  }
+  for (int i = 3; i < 5; i++)
+  {
+    if (Cp1cards1[i-3] > 0 and Cp1cards1[i-3] < 10){
+      strcpy(&envoiCarteJ1[i],&Cp1cards1[i-3]);
+      strcpy(&envoiCarteJ1[i+1],'/');
+      i=5;
+    }else{
+      strcpy(&envoiCarteJ1[i],&Cp1cards1[i-3]);
+    }
+  }
+  for (int i = 5; i < 7; i++)
+  {
+    if (Cbcards0[i-5] > 0 and Cbcards0[i-5] < 10){
+      strcpy(&envoiCarteJ1[i],'0');
+      strcpy(&envoiCarteJ1[i+5],&Cbcards0[i-5]);
+      i=7;
+    }else{
+      strcpy(&envoiCarteJ1[],&Cbcards0[i-5]);
+    }
+  }
+  printf("%s\n", envoiCarteJ1);
+
+  envoi(j1->socket,buffer,envoiCarteJ1);
+}
 /*-----------------------------------------*/
 
 /* jouer une manche */
@@ -165,9 +229,7 @@ int jouer(joueur_ *joueurs, int * pt_croupier)
 {
     int i=0;
     int bsum=0;
-    int p1cards[5]={0};
-    int p2cards[5]={0};
-    int bcards[5]={0};
+
     int cards[52];
     char go_on;
     char buffer[256];
@@ -181,38 +243,7 @@ int jouer(joueur_ *joueurs, int * pt_croupier)
   
 	choix_carte(cards);
 
-	//give the cards
-	p1cards[0]=cards[0];
-	p1cards[1]=cards[1];
-  p2cards[0]=cards[2];
-  p2cards[0]=cards[3];
-	bcards[0]=cards[4];
-	bcards[1]=cards[5];
 
-  char Cp1cards0[2];
-  char Cp1cards1[2];
-  char Cbcards0[2];
-  sprintf(Cp1cards0, "%d", p1cards[0]);
-  sprintf(Cp1cards1, "%d", p1cards[1]);
-  sprintf(Cbcards0, "%d", bcards[0]);
-
-  char envoiCarteJ1[255];
-  strcpy(&envoiCarteJ1[0],"C");
-  for (int i = 1; i < 3; i++)
-  {
-    strcpy(&envoiCarteJ1[i],&Cp1cards0[i-1]);
-  }
-  for (int i = 3; i < 5; i++)
-  {
-    strcpy(&envoiCarteJ1[i],&Cp1cards1[i-3]);
-  }
-  for (int i = 5; i < 7; i++)
-  {
-    strcpy(&envoiCarteJ1[i],&Cbcards0[i-5]);
-  }
-  printf("%s\n", envoiCarteJ1);
-
-  envoi(j1->socket,buffer,envoiCarteJ1);
 
 	for (i=0; i<2; i++)
 	{
