@@ -7,6 +7,7 @@ Serveur de notre application
 #include <sys/socket.h>
 #include <netdb.h> 		/* pour hostent, servent */
 #include <string.h> 		/* pour bcopy, ... */  
+#include <pthread.h>	/*utiliser thread*/
 #define TAILLE_MAX_NOM 256
 
 typedef struct sockaddr sockaddr;
@@ -265,16 +266,18 @@ int play(joueur_ * j)
 	}
 	printf("Sum of player's cards now:%d\n\n",psum);
 	envoi(j->socket, buffer, "points");
-	int psumReduit[1]={0};
-
+	
+	int psumReduit[2]={0};
 	if(psum < 10){
 		points[0] = '0';
-		psumReduit[0] = psum;
+		psumReduit[0] = psum%10;
 		sprintf(&points[1],"%d",psumReduit[0]);
+
 	}else if(psum >=10 && psum <20){
 		points[0] = '1';
 		psumReduit[0] = psum%10;
 		sprintf(&points[1],"%d",psumReduit[0]);
+
 	}else if(psum >=20){
 		points[0] = '2';
 		psumReduit[0] = psum%10;
