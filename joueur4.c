@@ -103,8 +103,6 @@ void envoi (int sock,char buffer[], char * message) {
     
 	/*ssize_t write(int fs, const void *buf, size_t N);*/
     write(sock,buffer,strlen(buffer)+1);
-    
-    printf("\nmessage envoye.\n");
 	return;
 }
 
@@ -246,7 +244,8 @@ int main(int argc, char **argv) {
 			if (strcmp(buffer,"points")==0){
 				printf("Voici vos points :");
 				if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
-					printf(" %c\n",buffer[0]);
+					printf(" %c%c\n",buffer[0],buffer[1]);
+					
 					//printf("Voici les points du croupier :");
 					//printf(" %c\n",buffer[1]);
 				}
