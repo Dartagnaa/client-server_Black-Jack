@@ -15,6 +15,7 @@ typedef struct sockaddr_in sockaddr_in;
 typedef struct hostent hostent;
 typedef struct servent servent;
 
+
 /* Tableau dynamique de socket des joueurs */
 typedef struct joueur
 {
@@ -23,6 +24,13 @@ typedef struct joueur
 	struct joueur * suiv;
 
 }joueur_;
+
+/*Structure de données pour la connexion avec les threads*/
+typedef struct connect
+{
+	joueur_ * joueur;
+	int numPort;
+}connect_;
 
 /*------------------------------------------------------*/
 /*                       THREADS                        */
@@ -63,7 +71,13 @@ void envoi(int sock, char buffer[], char* message) {
 }
 
 /* ------  création socket + connexion au client ---------- */
-void connexion(joueur_ * j, int socket_descriptor, char buffer[], char * reponse, int numPort){
+void * connexion(void* paramConnexion){
+	/*Récupération des paramètres de la fonction connexion*/
+	connect_ param = *(connect_ * ) paramConnexion;
+	joueur_ * j = param.joueur;
+	int numPort = param.numPort;
+	
+	char buffer[256];
     int    nouv_socket_descriptor, 	/* [nouveau] descripteur de socket */
       longueur_adresse_courante; 	/* longueur d'adresse courante d'un client */
     sockaddr_in 	adresse_locale, 		/* structure d'adresse locale*/
@@ -71,9 +85,9 @@ void connexion(joueur_ * j, int socket_descriptor, char buffer[], char * reponse
     hostent*		ptr_hote; 			/* les infos recuperees sur la machine hote */
     servent*		ptr_service; 			/* les infos recuperees sur le service de la machine */
     char 		machine[TAILLE_MAX_NOM+1]; 	/* nom de la machine locale */
-
+	printf("on est la");
     gethostname(machine,TAILLE_MAX_NOM);	/* recuperation du nom de la machine */
-    
+    int socket_descriptor = j->socket;
     /* recuperation de la structure d'adresse en utilisant le nom */
     if ((ptr_hote = gethostbyname(machine)) == NULL) {
 		perror("erreur : impossible de trouver le serveur a partir de son nom.");
@@ -115,9 +129,6 @@ void connexion(joueur_ * j, int socket_descriptor, char buffer[], char * reponse
     /* attente des connexions et traitement des donnees recues */
     for(;;) {
         longueur_adresse_courante = sizeof(adresse_client_courant);
-        //thread
-        pthread_t thread;
-        pthread_create(&thread, NULL, play,j);
         /* adresse_client_courant sera renseigné par accept via les infos du connect */
         if ((nouv_socket_descriptor = accept(socket_descriptor, (sockaddr*)(&adresse_client_courant), &longueur_adresse_courante))< 0) 
         {
@@ -130,7 +141,6 @@ void connexion(joueur_ * j, int socket_descriptor, char buffer[], char * reponse
         j->socket = nouv_socket_descriptor;
         //initialise le nombre de point du joueur
         j->point = 0;
-        return;
     }
 }
 
@@ -423,34 +433,57 @@ int play(joueur_ * j)
 /*---------------------------------------*/
 
 int main(int argc, char **argv){
-  
-    int 		socket_descriptor; 		/* descripteur de socket */
-    char        buffer[256];
+  	/* descripteur de socket */
     char*       msg;                   /* message à renvoyer au client */
     int longueur;
     char reponse;            /*reponse du char*/
     int manche = 1;
+	int ret=0;
     /* initialiser point du croupier à 0 */
     int point_croupier = 0;
+	pthread_t thread_clients [2]; /*Création de 2 thread car 2 clients*/
 
     joueur_ * ListeJ;
-    joueur_ * j1;
-    joueur_ * j2;
+    joueur_ * aux;
+    joueur_ * prec;
 
     /* Conexion des 2 joueurs */
     ListeJ = (joueur_ *) malloc(1 * sizeof(joueur_));
     ListeJ->suiv = (joueur_ *) malloc(1 * sizeof(joueur_));
-    j1 = ListeJ;
-    j2 = ListeJ->suiv;
+    aux = ListeJ;
+    prec = ListeJ;
     int port = 5000;
 
     //Etablissement de la connexion avec le joueur 1
-    connexion(j1, socket_descriptor, buffer, &reponse,port);
-    //connexion(j2, socket_descriptor, buffer, &reponse,port2);
+    //connexion(j1, buffer, port);
+	
+	connect_ paramConnect;
+	paramConnect.numPort = port;
+	
+	printf ("Creation des threads \n");
+    for (int i = 0; i < 2; i++)
+	{
+		printf("TEST");
+		paramConnect.joueur = aux;
+		printf("test");
+		ret = pthread_create (
+			& thread_clients [i], NULL,
+			connexion, (void *) connect);
+		printf("coucou");
+		sleep(2);
+		/*if (ret)
+		{
+		fprintf (stderr, "%s", strerror (ret));
+		}*/
+		prec = aux;
+		aux = prec->suiv;
+	}
 
-
-    
-    play(j1);
+	for (i = 0; i < 2; i++)
+   {
+      pthread_join (thread_clients [i], NULL);
+   }
+    //play(j1);
 
 
 }
