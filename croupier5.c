@@ -71,7 +71,8 @@ void envoi(int sock, char buffer[], char* message) {
 }
 
 /* ------  création socket + connexion au client ---------- */
-void * connexion(void* paramConnexion){
+void connexion(){
+	printf("on est ici");
 	/*Récupération des paramètres de la fonction connexion*/
 	connect_ param = *(connect_ * ) paramConnexion;
 	joueur_ * j = param.joueur;
@@ -86,18 +87,11 @@ void * connexion(void* paramConnexion){
     servent*		ptr_service; 			/* les infos recuperees sur le service de la machine */
     char 		machine[TAILLE_MAX_NOM+1]; 	/* nom de la machine locale */
 	printf("on est la");
-    gethostname(machine,TAILLE_MAX_NOM);	/* recuperation du nom de la machine */
-    int socket_descriptor = j->socket;
-    /* recuperation de la structure d'adresse en utilisant le nom */
-    if ((ptr_hote = gethostbyname(machine)) == NULL) {
-		perror("erreur : impossible de trouver le serveur a partir de son nom.");
-		exit(1);
-    }
-    
+    int socket_descriptor;
     /* initialisation de la structure adresse_locale avec les infos recuperees */			
     
     /* copie de ptr_hote vers adresse_locale */
-    bcopy((char*)ptr_hote->h_addr, (char*)&adresse_locale.sin_addr, ptr_hote->h_length);
+    //bcopy((char*)ptr_hote->h_addr, (char*)&adresse_locale.sin_addr, ptr_hote->h_length);
     adresse_locale.sin_family		= ptr_hote->h_addrtype; 	/* ou AF_INET */
     adresse_locale.sin_addr.s_addr	= INADDR_ANY; 			/* ou AF_INET */
     
@@ -128,6 +122,7 @@ void * connexion(void* paramConnexion){
 
     /* attente des connexions et traitement des donnees recues */
     for(;;) {
+		
         longueur_adresse_courante = sizeof(adresse_client_courant);
         /* adresse_client_courant sera renseigné par accept via les infos du connect */
         if ((nouv_socket_descriptor = accept(socket_descriptor, (sockaddr*)(&adresse_client_courant), &longueur_adresse_courante))< 0) 
@@ -179,8 +174,9 @@ int convert_jkq(int a)
 }
 
 
-int play(joueur_ * j)
+void *play(void *param)
 {
+	joueur_ j = (joueur_ *) param; 
 	int i;
 	int psum=0;
 	int bsum=0;
@@ -441,7 +437,7 @@ int main(int argc, char **argv){
 	int ret=0;
     /* initialiser point du croupier à 0 */
     int point_croupier = 0;
-	pthread_t thread_clients [2]; /*Création de 2 thread car 2 clients*/
+	pthread_t thread_clients[2]; /*Création de 2 thread car 2 clients*/
 
     joueur_ * ListeJ;
     joueur_ * aux;
@@ -456,34 +452,74 @@ int main(int argc, char **argv){
 
     //Etablissement de la connexion avec le joueur 1
     //connexion(j1, buffer, port);
-	
-	connect_ paramConnect;
-	paramConnect.numPort = port;
-	
-	printf ("Creation des threads \n");
-    for (int i = 0; i < 2; i++)
-	{
-		printf("TEST");
-		paramConnect.joueur = aux;
-		printf("test");
-		ret = pthread_create (
-			& thread_clients [i], NULL,
-			connexion, (void *) connect);
-		printf("coucou");
-		sleep(2);
-		/*if (ret)
-		{
-		fprintf (stderr, "%s", strerror (ret));
-		}*/
-		prec = aux;
-		aux = prec->suiv;
-	}
 
-	for (i = 0; i < 2; i++)
-   {
-      pthread_join (thread_clients [i], NULL);
-   }
+	
+	
     //play(j1);
 
+
+
+
+	/****************CONNEXION************/
+	char buffer[256];
+    int  longueur_adresse_courante; 	/* longueur d'adresse courante d'un client */
+    sockaddr_in adresse_locale, 		/* structure d'adresse locale*/
+				adresse_client_courant; 	/* adresse client courant */
+    hostent* ptr_hote; 			/* les infos recuperees sur la machine hote */
+    int socket_descriptor;
+	int i=0;
+    /* initialisation de la structure adresse_locale avec les infos recuperees */			
+    
+    /* copie de ptr_hote vers adresse_locale */
+    //bcopy((char*)ptr_hote->h_addr, (char*)&adresse_locale.sin_addr, ptr_hote->h_length);
+    adresse_locale.sin_family		= ptr_hote->h_addrtype; 	/* ou AF_INET */
+    adresse_locale.sin_addr.s_addr	= INADDR_ANY; 			/* ou AF_INET */
+    
+    /*-----------------------------------------------------------*/
+
+    /* utiliser un nouveau numero de port */
+    adresse_locale.sin_port = htons(port);
+
+    /*-----------------------------------------------------------*/
+    
+    printf("numero de port pour la connexion au serveur : %d \n", 
+		   ntohs(adresse_locale.sin_port));
+
+/*--------------------------creation de la socket--------------------------------*/  
+    if ((socket_descriptor = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		perror("erreur : impossible de creer la socket de connexion avec le client.");
+		exit(1);
+    }
+
+    /* association du socket socket_descriptor à la structure d'adresse adresse_locale */
+    if ((bind(socket_descriptor, (sockaddr*)(&adresse_locale), sizeof(adresse_locale))) < 0) {
+		perror("erreur : impossible de lier la socket a l'adresse de connexion.");
+		exit(1);
+    }
+
+    /* initialisation de la file d'ecoute */
+    listen(socket_descriptor,5);
+
+
+    /* attente des connexions et traitement des donnees recues */
+    for(;;) {
+		
+        longueur_adresse_courante = sizeof(adresse_client_courant);
+        /* adresse_client_courant sera renseigné par accept via les infos du connect */
+        if ((aux->socket = accept(socket_descriptor, (sockaddr*)(&adresse_client_courant), &longueur_adresse_courante))< 0) 
+        {
+            perror("erreur : impossible d'accepter la connexion avec le client.\n");
+            exit(1);
+        }
+
+        //initialise le nombre de point du joueur
+        aux->point = 0;
+
+		pthread_create (&thread_clients[i],NULL,play,(void *)&aux);
+
+		prec = aux;
+		aux = prec->suiv;
+		i++;
+    }
 
 }
