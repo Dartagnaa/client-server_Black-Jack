@@ -9,6 +9,8 @@ client <adresse-serveur> <message-a-transmettre>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>
+#include <unistd.h>			// For sleep and other functions 
+
 
 typedef struct sockaddr 	sockaddr;
 typedef struct sockaddr_in 	sockaddr_in;
@@ -240,19 +242,24 @@ int main(int argc, char **argv) {
 				} while (d!='o' && d!='n');
 				envoi(socket_descriptor, buffer, &d);
 			}
-
+			//afficher les points du joueur
 			if (strcmp(buffer,"points")==0){
 				printf("Voici vos points :");
 				if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
 					printf(" %c%c\n",buffer[0],buffer[1]);
-					
-					//printf("Voici les points du croupier :");
-					//printf(" %c\n",buffer[1]);
 				}
 			}
+			//afficher les points du croupier
+			if (strcmp(buffer,"pointscroupier")==0){
+				printf("Voici les points du croupier :");
+				if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
+					printf(" %c%c\n",buffer[0],buffer[1]);
+				}
+			}
+			
 
 			if (strcmp(buffer,"loose")==0){
-				printf("Vous avez perdu ! \n");
+				printf("Votre score est supérieur à 21 : Vous avez perdu ! \n");
 				break;
 			}
 			if (strcmp(buffer,"win")==0){
@@ -261,12 +268,31 @@ int main(int argc, char **argv) {
 			}
 
 			// choisir une nouvelle carte
-			if (strcmp(buffer,"cartes?")==0){
+			if (strcmp(buffer,"piocher?")==0){
 				printf("Voulez-vous piocher ? 'o' pour oui ou 'n' pour non :\n");
 				do{
 					d = getchar();
 				} while (d!='o' && d!='n');
 				envoi(socket_descriptor, buffer, &d);
+				if(d=='o'){
+					printf("Votre nouvelle carte: \n");
+                	sleep(2);
+					intialisationBuffer(buffer);
+					if((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
+						int carte = 0;
+						//nouvelle carte
+						if (memcmp(&buffer[0],"0",1)==0){
+							carte = buffer[1] - '0';
+						}else if(memcmp(&buffer[0],"1",1)==0){
+							carte = buffer[1] - '0';
+							carte = carte + 10;
+						}
+						pic(carte);
+					}
+				}
+				else if(d=='n'){
+					printf("Le croupier va piocher ses cartes voici d'abord sa première carte :\n");
+				}
 			}
 		}
 	}
