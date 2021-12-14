@@ -3,6 +3,7 @@ Serveur de notre application
 ------------------------------------------------*/
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>			// For sleep and other functions 
 #include <linux/types.h> 	/* pour les sockets */
 #include <sys/socket.h>
 #include <netdb.h> 		/* pour hostent, servent */
@@ -22,16 +23,19 @@ typedef struct joueur
 	int id;
 	int socket;
 	int point;
+	int jcartes[5];
 	struct joueur * suiv;
 
 }joueur_;
 
 /*Structure de données pour la connexion avec les threads*/
-typedef struct connect
+typedef struct threadParam
 {
 	joueur_ * joueur;
-	int numPort;
-}connect_;
+	int cards[52];
+	//int bcards[5];
+
+}threadParam_;
 
 /*------------------------------------------------------*/
 /*                       THREADS                        */
@@ -71,67 +75,6 @@ void envoi(int sock, char buffer[], char* message) {
     return;
 }
 
-/* ------  création socket + connexion au client ---------- */
-/*void connexion(){
-	printf("on est ici");
-	//Récupération des paramètres de la fonction connexion
-	connect_ param = *(connect_ * ) paramConnexion;
-	joueur_ * j = param.joueur;
-	int numPort = param.numPort;
-	
-	char buffer[256];
-    int    nouv_socket_descriptor, 	// [nouveau] descripteur de socket
-      longueur_adresse_courante; 	// longueur d'adresse courante d'un client
-    sockaddr_in 	adresse_locale, 		// structure d'adresse locale
-			adresse_client_courant; 	// adresse client courant 
-    hostent*		ptr_hote; 			// les infos recuperees sur la machine hote 
-    servent*		ptr_service; 			// les infos recuperees sur le service de la machine 
-    char 		machine[TAILLE_MAX_NOM+1]; 	// nom de la machine locale 
-	printf("on est la");
-    int socket_descriptor;
-    // initialisation de la structure adresse_locale avec les infos recuperees 			
-    
-    // copie de ptr_hote vers adresse_locale
-    //bcopy((char*)ptr_hote->h_addr, (char*)&adresse_locale.sin_addr, ptr_hote->h_length);
-    adresse_locale.sin_family		= ptr_hote->h_addrtype; 
-    adresse_locale.sin_addr.s_addr	= INADDR_ANY; 
-
-    // utiliser un nouveau numero de port
-    adresse_locale.sin_port = htons(numPort);
-    
-    printf("numero de port pour la connexion au serveur : %d \n", 
-		   ntohs(adresse_locale.sin_port));
-
-//--------------------------creation de la socket--------------------------------
-    if ((socket_descriptor = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		perror("erreur : impossible de creer la socket de connexion avec le client.");
-		exit(1);
-    }
-
-    // association du socket socket_descriptor à la structure d'adresse adresse_locale
-    if ((bind(socket_descriptor, (sockaddr*)(&adresse_locale), sizeof(adresse_locale))) < 0) {
-		perror("erreur : impossible de lier la socket a l'adresse de connexion.");
-		exit(1);
-    }
-    listen(socket_descriptor,5);
-
-    // attente des connexions et traitement des donnees recues
-    for(;;) {
-		
-        longueur_adresse_courante = sizeof(adresse_client_courant);
-        //adresse_client_courant sera renseigné par accept via les infos du connect
-        if ((nouv_socket_descriptor = accept(socket_descriptor, (sockaddr*)(&adresse_client_courant), &longueur_adresse_courante))< 0) 
-        {
-            perror("erreur : impossible d'accepter la connexion avec le client.\n");
-            exit(1);
-        }
-
-        //affiliation du socket au joueur entré
-        j->socket = nouv_socket_descriptor;
-        //initialise le nombre de point du joueur
-        j->point = 0;
-    }
-}*/
 
 /*------------------------------------------------------*/
 
@@ -170,31 +113,38 @@ int convert_jkq(int a)
 
 void *play(void *param)
 {
-	joueur_ * j = (joueur_ *) param; 
-	printf("adresse pointeur j: %p\n",j);
-	printf("id du joueur: %i\n",j->id);
+	threadParam_ * p = (threadParam_ *) malloc(1 * sizeof(threadParam_));
+	p=(threadParam_ *) param;
+	joueur_ * j = (joueur_ *) malloc(1 * sizeof(joueur_));
+	j = p->joueur;
+
+	int cards[52];
+	memcpy(cards,p->cards,52);
+
+	int pcards[5];
+	for (int a = 0; a < 5; a++)
+	{
+		pcards[a]=j->jcartes[a];
+	}
+
+	int id = j->id;
+	
+
 	int i;
 	int psum=0;
 	int bsum=0;
-	int pcards[5]={0};
     char pcardsChar[10]; // car 2 places pour un nombre
 	int bcards[5]={0};
     char bcardsChar[10]; // car 2 places pour un nombre
-	int cards[52];
+	//int cards[52];
     char buffer[255];
 	char d;
 	int longueur;
 	char *bsumC;	//bsum en format char *
 	char points[2];	// stocker les points du joueur et du croupier pour l'envoyer au joueur
-	
-	//shuff the cards
-	shuff(cards);
 
-	//give the cards
-	pcards[0]=cards[0];
-	pcards[1]=cards[1];
-	bcards[0]=cards[2];
-	bcards[1]=cards[3];
+	//give the cards to computer
+	bcards[0]=cards[0];
 	
 	//the 2 cards player get
     //envoyer la carte du croupier au joueur
@@ -236,7 +186,6 @@ void *play(void *param)
 			intialisationBuffer(buffer);
 			sleep(2);
 			if((longueur = read(j->socket, buffer, sizeof(buffer))) > 0) {
-				printf("buffer : %c", buffer[0]);
 				if (memcmp(&buffer[0],"o",1)==0)
 				{
 					//printf("You've chosen value 11 for card A.\n");
@@ -254,13 +203,13 @@ void *play(void *param)
 		}else {
 			psum = psum + pcards[i]%100;
 		}
-
+		//printf("somme : %d\n",psum);
 		if (psum > 21)
 		{
 			//printf("Sum of player's cards now:%d\n\n",psum);
 			printf("Computer win!\n");
 			envoi(j->socket,buffer,"loose");
-			return 1;
+			return 0;
 		}
 		else if (psum == 21)
 		{
@@ -291,105 +240,162 @@ void *play(void *param)
 	}
 	envoi(j->socket,buffer,points);
 	
-/*	
+	
 	//whether player get another cards
-	i=0;
+	//i=0;
 	for (i=0; i<3; i++)
 	{
-		char j = 'n';
-		envoi(j->socket, buffer, "cartes?");
+		envoi(j->socket, buffer, "piocher?");
 		if((longueur = read(j->socket, buffer, sizeof(buffer))) > 0) {
-			if (strcmp(buffer,"o")==0)
+			if (memcmp(&buffer[0],"o",1)==0)
 			{
-				printf("You've got another card now.\n");
-				pcards[i+2]=cards[i+4];
-				printf("and your card %d is:\n", i+3);
-				pic(pcards[i+2]);
-				
+				pcards[i+2]=cards[id+i+10];
+				if(pcards[i+2]%100 < 10){
+					pcardsChar[0] = '0';
+					sprintf(&pcardsChar[1],"%d",pcards[i+2]%100);
+				}else if(pcards[i+2]%100 >=10){
+					pcardsChar[0] = '1';
+					sprintf(&pcardsChar[1],"%d",(pcards[i+2]%100)%10); // modulo pour récupérer la deuxième partie
+				}
+				//envoi carte au joueur
+				envoi(j->socket,buffer,pcardsChar);
+				sleep(5);
+			
 				if (pcards[i+2]%100 == 1)
 				{
-					printf("Choose A value of the card %d, input 'y' for 11 or 'n' for 1:\n", i+3);
-					do{
-						d = getchar();
-					} while (d!='y' && d!='n');	
-					if (d == 'y')
-					{
-						printf("You've chosen value 11 for card A.\n");
-						psum = psum + 11;
-					}
-					else if(d == 'n')
-					{
-						printf("You've chosen value 1 for card A.\n");
-						psum = psum +1;
+					printf("valeur A\n");
+					envoi(j->socket,buffer,"valeur A");
+					intialisationBuffer(buffer);
+					sleep(2);
+					if((longueur = read(j->socket, buffer, sizeof(buffer))) > 0) {
+						if (memcmp(&buffer[0],"o",1)==0)
+						{
+							//printf("You've chosen value 11 for card A.\n");
+							psum = psum + 11;
+						}
+						else if(memcmp(&buffer[0],"n",1)==0)
+						{
+							//printf("You've chosen value 1 for card A.\n");
+							psum = psum +1;
+						}
 					}
 				}
 				else if (convert_jkq(pcards[i+2]) %100 ==10) psum = psum + 10;
 				else psum = psum + pcards[i+2]%100;
+
+				//envoi des points au joueur
 				
+			
 				if (psum > 21)
 				{
-					printf("Sum of player's cards now:%d\n\n",psum);
+					//printf("Sum of player's cards now:%d\n\n",psum);
 					printf("Computer win!\n");
-					return 1;
+					envoi(j->socket,buffer,"loose");
+					return 0;
 				}
 				else if (psum == 21)
 				{
-					printf("Sum of player's cards now:%d\n\n",psum);
+					//printf("Sum of player's cards now:%d\n\n",psum);
 					printf("Player win!\n");
+					envoi(j->socket,buffer,"win");
 					return 0;
-				}		
-				else printf("Sum of player's cards now:%d\n\n",psum);
-			}
-			else 
-			{
-				printf("Sum of player's cards now:%d\n\n",psum);
+				}else {
+					envoi(j->socket, buffer, "points");	
+					int psumReduit[2]={0};
+					if(psum < 10){
+						points[0] = '0';
+						psumReduit[0] = psum%10;
+						sprintf(&points[1],"%d",psumReduit[0]);
+
+					}else if(psum >=10 && psum <20){
+						points[0] = '1';
+						psumReduit[0] = psum%10;
+						sprintf(&points[1],"%d",psumReduit[0]);
+
+					}else if(psum >=20){
+						points[0] = '2';
+						psumReduit[0] = psum%10;
+						sprintf(&points[1],"%d",psumReduit[0]);
+					}
+					
+					envoi(j->socket,buffer,points);
+					printf("Sum of player's cards now:%d\n\n",psum);
+				}
+			}else{
 				break;
 			}
 		}
 	}
+
 	if (i == 3)
 	{
 		printf("Player win! Because the sum of your 5 cards is no larger than 21! So lucky!\n");
 		return 0;
 	}
+
 	
-	//the 2 cards of boss/computer
-	//i=0;
-	printf("Computer's cards:\n");
-	pic(bcards[0]);
-	pic(bcards[1]);
-
-
+	//rafficher les cartes du croupier
+	envoi(j->socket,buffer,"croupier");
+	if(bcards[0]%100 < 10){
+		bcardsChar[0] = '0';
+		sprintf(&bcardsChar[1],"%d",bcards[0]%100);
+	}else if(bcards[0]%100 >=10){
+		bcardsChar[0] = '1';
+		sprintf(&bcardsChar[1],"%d",(bcards[0]%100)%10); // modulo pour récupérer la deuxième partie
+	}
+    envoi(j->socket,buffer,bcardsChar);
 	
 	//whether computer get another cards until bsum>16
 	//i=0;
-	for (i=0; i<3 && bsum<17; i++)
+	for (i=0; i<4 && bsum<17; i++)
 	{
-		bcards[i+2]=cards[i+7];
-		printf("Computer's card %d is:\n", i+3);
-		pic(bcards[i+2]);
+		bcards[i+1]=cards[i+20];
+		//envoi nouvelle carte du croupier au joueur
+		envoi(j->socket,buffer,"croupier");
+		if(bcards[i+1]%100 < 10){
+			bcardsChar[0] = '0';
+			sprintf(&bcardsChar[1],"%d",bcards[i+1]%100);
+		}else if(bcards[i+1]%100 >=10){
+			bcardsChar[0] = '1';
+			sprintf(&bcardsChar[1],"%d",(bcards[i+1]%100)%10); // modulo pour récupérer la deuxième partie
+		}
+		envoi(j->socket,buffer,bcardsChar);
 		
-		if (bcards[i+2]%100 == 1)
+		if (bcards[i]%100 == 1)
 		{
 			if (bsum+11 <= 21)
 			{
-				printf("Computer has chosen A as 11\n");
 				bsum = bsum+11;
-				printf("Sum of computer's cards now:%d\n\n", bsum);
 			}
 			else
 			{
-				printf("Computer has chosen A as 1\n");
 				bsum = bsum+1;
-				printf("Sum of computer's cards now:%d\n\n", bsum);
 			}
 		}
 		else
 		{
-			bsum = bsum + convert_jkq(bcards[i+2])%100;
-			printf("Sum of computer's cards now:%d\n\n", bsum);
+			bsum = bsum + convert_jkq(bcards[i+1])%100;
 		}
 	}
+	//envoyer les points du croupier au joueur
+	envoi(j->socket, buffer, "pointscroupier");	
+	if(bsum < 10){
+		points[0] = '0';
+		psumReduit[0] = bsum%10;
+		sprintf(&points[1],"%d",psumReduit[0]);
+
+	}else if(bsum >=10 && bsum <20){
+		points[0] = '1';
+		psumReduit[0] = bsum%10;
+		sprintf(&points[1],"%d",psumReduit[0]);
+
+	}else if(bsum >=20){
+		points[0] = '2';
+		psumReduit[0] = bsum%10;
+		sprintf(&points[1],"%d",psumReduit[0]);
+	}
+	envoi(j->socket,buffer,points);
+
 	if (i == 3)
 	{
 		printf("Computer win! Because the sum of its 5 cards is no larger than 21! So lucky!\n");
@@ -414,7 +420,7 @@ void *play(void *param)
 	}
 		
 	return 3;
-    */
+
 }
 
 
@@ -433,7 +439,8 @@ int main(int argc, char **argv){
 	int ret=0;
     /* initialiser point du croupier à 0 */
     int point_croupier = 0;
-	pthread_t thread_clients[2]; /*Création de 2 thread car 2 clients*/
+	pthread_t thread_clients[3]; /*car 3 clients max*/
+	int cards[52];		// Tas de carte du jeu	
 
     joueur_ * ListeJ;
     joueur_ * aux;
@@ -446,15 +453,13 @@ int main(int argc, char **argv){
     prec = ListeJ;
     int port = 5000;
 
-    //Etablissement de la connexion avec le joueur 1
-    //connexion(j1, buffer, port);
+	/* Mélange des cartes avant de lancer la partie */
+	shuff(cards);
 
-	
-	
-    //play(j1);
-
-
-
+	/* init + ajouter les cartes dans les paramètres du thread */
+	threadParam_ * param;
+	param = (threadParam_ *) malloc(1 * sizeof(threadParam_));
+	memcpy(param->cards,cards,52);
 
 	/********************************CONNEXION*******************************/
 
@@ -522,9 +527,12 @@ int main(int argc, char **argv){
         //initialise le nombre de point du joueur
         aux->point = 0;
 		aux->id = i;
+		aux->jcartes[0] = param->cards[i+1];
+		aux->jcartes[1] = param->cards[i+6];
 
-		printf("i: %i\n",aux->id);
-		pthread_create (&thread_clients[i],NULL,play,(void *)aux);
+		param->joueur = aux;
+
+		pthread_create(&thread_clients[i],NULL,play,(void *)param);
 
 		prec = aux;
 		aux = prec->suiv;
