@@ -259,7 +259,7 @@ int main(int argc, char **argv) {
 			
 
 			if (strcmp(buffer,"loose")==0){
-				printf("Votre score est supérieur à 21 : Vous avez perdu ! \n");
+				printf("Vous avez perdu ! \n");
 				break;
 			}
 			if (strcmp(buffer,"win")==0){
