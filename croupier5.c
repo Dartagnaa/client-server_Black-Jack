@@ -159,6 +159,7 @@ void *play(void *param)
     envoi(j->socket,buffer,bcardsChar);
 
     envoi(j->socket,buffer,"joueur");
+
 	if(pcards[0]%100 < 10){
 		pcardsChar[0] = '0';
 		sprintf(&pcardsChar[1],"%d",pcards[0]%100);
