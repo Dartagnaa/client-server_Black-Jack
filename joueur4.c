@@ -283,7 +283,7 @@ int main(int argc, char **argv) {
 					}
 				}
 				else if(d=='n'){
-					printf("\nLe croupier va piocher. Voici d'abord sa première carte :\n");
+					printf("\nLe croupier va piocher. Affichage de sa première carte.\n");
 				}
 			}
 
